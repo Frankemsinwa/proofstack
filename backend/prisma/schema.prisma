@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  talent
+  client
+}
+
+enum ReferralType {
+  client
+  peer
+  other
+}
+
+enum JobStatus {
+  open
+  closed
+}
+
+enum ProposalStatus {
+  sent
+  accepted
+  rejected
+}
+
+model User {
+  id                String      @id @default(uuid())
+  email             String      @unique
+  passwordHash      String      @map("password_hash")
+  fullName          String      @map("full_name")
+  username          String      @unique
+  profileImageUrl   String?     @map("profile_image_url")
+  bio               String?
+  location          String?
+  role              Role
+  trustScore        Int         @default(0) @map("trust_score")
+  joinedAt          DateTime    @default(now()) @map("joined_at")
+
+  // Relations
+  skills            UserSkill[]
+  portfolioProjects PortfolioProject[]
+  referralsGiven    Referral[]  @relation("ReferralsGiven")
+  referralsReceived Referral[]  @relation("ReferralsReceived")
+  jobPosts          JobPost[]   @relation("ClientJobs")
+  proposals         Proposal[]
+  challengeSubs     ChallengeSubmission[]
+}
+
+model Skill {
+  id    String      @id @default(uuid())
+  name  String
+
+  // Relations
+  users UserSkill[]
+}
+
+model UserSkill {
+  userId    String
+  skillId   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  skill     Skill    @relation(fields: [skillId], references: [id])
+
+  @@id([userId, skillId])
+}
+
+model PortfolioProject {
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  description String
+  url         String
+  media       String[]
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Referral {
+  id               String       @id @default(uuid())
+  referredUserId   String       @map("referred_user_id")
+  referrerId       String       @map("referrer_id")
+  testimonialText  String       @map("testimonial_text")
+  rating           Int
+  type             ReferralType
+  isVerified       Boolean      @default(false) @map("is_verified")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  referredUser     User         @relation("ReferralsReceived", fields: [referredUserId], references: [id])
+  referrer         User         @relation("ReferralsGiven",    fields: [referrerId],     references: [id])
+}
+
+model JobPost {
+  id                  String       @id @default(uuid()) 
+  clientId            String       @map("client_id")
+  title               String
+  description         String
+  category            String
+  budgetMin           Float        @map("budget_min")
+  budgetMax           Float        @map("budget_max")
+  locationPreference  String       @map("location_preference")
+  status              JobStatus
+  createdAt           DateTime     @default(now()) @map("created_at")
+
+  client              User         @relation("ClientJobs", fields: [clientId], references: [id])
+  proposals           Proposal[]
+}
+
+model Proposal {
+  id             String         @id @default(uuid())
+  jobPostId      String         @map("job_post_id")
+  userId         String
+  coverLetter    String         @map("cover_letter")
+  attachmentUrl  String?        @map("attachment_url")
+  status         ProposalStatus
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  jobPost        JobPost        @relation(fields: [jobPostId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+}
+
+model ProofChallenge {
+  id          String    @id @default(uuid())
+  title       String
+  brief       String
+  deadline    DateTime
+  winnerIds   String[]  @map("winner_ids")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  submissions ChallengeSubmission[]
+}
+
+model ChallengeSubmission {
+  id           String   @id @default(uuid())
+  challengeId  String   @map("challenge_id")
+  userId       String
+  projectUrl   String   @map("project_url")
+  description  String
+  votes        Int
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  challenge    ProofChallenge @relation(fields: [challengeId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+}
