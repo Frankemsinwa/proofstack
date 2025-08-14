@@ -38,7 +38,7 @@ A mobile platform that connects skilled digital talents with real-world jobs and
 
 * Email/password signup and secure login.
 * JWT-based authentication.
-* Support for roles: `TALENT`, `HIRER`.
+* Support for roles: `TALENT`, `CLIENT`.
 
 #### 2. **User Profile & Skills**
 
@@ -54,7 +54,7 @@ A mobile platform that connects skilled digital talents with real-world jobs and
 
 #### 4. **Job Posting & Applications**
 
-* Hirers can create jobs with title, description, and requirements.
+* CLIENTs can create jobs with title, description, and requirements.
 * Talents can view jobs and submit proposals.
 * Jobs have status tracking (`OPEN`, `IN_PROGRESS`, `COMPLETED`, etc.).
 

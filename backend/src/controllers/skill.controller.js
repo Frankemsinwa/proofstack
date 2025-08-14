@@ -29,7 +29,7 @@ export const getSkills = async (req, res) => {
 // Assign skill(s) to a user
 export const assignSkillsToUser = async (req, res) => {
   const prisma = getPrismaClient();
-  const { userId } = req.params;
+  const userId = req.user.id;
   const { skillIds } = req.body;
 
   try {
@@ -70,7 +70,8 @@ export const getSkillsByUser = async (req, res) => {
 // Remove a skill from a user
 export const removeSkillFromUser = async (req, res) => {
   const prisma = getPrismaClient();
-  const { userId, skillId } = req.params;
+  const userId = req.user.id;
+  const { skillId } = req.params;
 
   try {
     await prisma.userSkill.delete({

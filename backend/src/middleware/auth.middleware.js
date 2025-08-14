@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import getPrismaClient from '../utils/prisma.js';
 
-export const protect = async (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   let token;
 
   if (
@@ -37,3 +37,5 @@ export const protect = async (req, res, next) => {
     res.status(401).json({ error: 'Not authorized, no token' });
   }
 };
+
+export default authMiddleware;

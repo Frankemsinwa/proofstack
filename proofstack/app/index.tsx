@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, Pattern, Path, Rect, Circle } from 'react-native-svg';
 import { colors } from '../src/theme/colors';
 
 const SplashScreen = () => {
+  const router = useRouter();
   const slideUpAnim = useRef(new Animated.Value(0)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -14,6 +16,10 @@ const SplashScreen = () => {
   const spinAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace('/auth/signup');
+    }, 10000);
+
     // Slide up animation
     Animated.timing(slideUpAnim, {
       toValue: 1,
@@ -61,6 +67,7 @@ const SplashScreen = () => {
         })
     ).start();
 
+    return () => clearTimeout(timer);
   }, []);
 
   const slideUpStyle = {

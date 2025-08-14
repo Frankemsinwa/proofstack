@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { LayoutDashboard, PlusSquare, Users, Inbox } from 'lucide-react-native';
 
 export default function ClientLayout() {
   return (
@@ -19,28 +19,34 @@ export default function ClientLayout() {
         name="index"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color }) => <FontAwesome5 name="home" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <LayoutDashboard size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="post-job"
         options={{
           title: 'Post Job',
-          tabBarIcon: ({ color }) => <FontAwesome5 name="plus-square" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <PlusSquare size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="applicants"
         options={{
           title: 'Applicants',
-          tabBarIcon: ({ color }) => <FontAwesome5 name="users" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Users size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="inbox"
         options={{
           title: 'Inbox',
-          tabBarIcon: ({ color }) => <FontAwesome5 name="inbox" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Inbox size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="give-referral"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

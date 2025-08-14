@@ -4,10 +4,11 @@ import getPrismaClient from '../utils/prisma.js';
 export const createPortfolioProject = async (req, res) => {
   const prisma = getPrismaClient();
   try {
-    const { userId, title, description, url, media } = req.body;
+    const { title, description, url, media } = req.body;
+    const userId = req.user.id;
 
-    if (!userId || !title || !description || !url) {
-      return res.status(400).json({ error: 'User ID, title, description, and URL are required.' });
+    if (!title || !description || !url) {
+      return res.status(400).json({ error: 'Title, description, and URL are required.' });
     }
 
     const project = await prisma.portfolioProject.create({
@@ -62,6 +63,19 @@ export const updatePortfolioProject = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, url, media } = req.body;
+    const userId = req.user.id;
+
+    const existingProject = await prisma.portfolioProject.findUnique({
+      where: { id },
+    });
+
+    if (!existingProject) {
+      return res.status(404).json({ error: 'Portfolio project not found.' });
+    }
+
+    if (existingProject.userId !== userId) {
+      return res.status(403).json({ error: 'You are not authorized to update this project.' });
+    }
 
     const project = await prisma.portfolioProject.update({
       where: { id },
@@ -80,6 +94,19 @@ export const deletePortfolioProject = async (req, res) => {
   const prisma = getPrismaClient();
   try {
     const { id } = req.params;
+    const userId = req.user.id;
+
+    const existingProject = await prisma.portfolioProject.findUnique({
+      where: { id },
+    });
+
+    if (!existingProject) {
+      return res.status(404).json({ error: 'Portfolio project not found.' });
+    }
+
+    if (existingProject.userId !== userId) {
+      return res.status(403).json({ error: 'You are not authorized to delete this project.' });
+    }
 
     await prisma.portfolioProject.delete({
       where: { id },

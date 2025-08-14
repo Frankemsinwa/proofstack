@@ -140,6 +140,10 @@ export const updateUser = async (req, res) => {
     const { id } = req.params;
     const { username, role } = req.body;
 
+    if (req.user.id !== id) {
+      return res.status(403).json({ error: 'You are not authorized to update this user.' });
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: { username, role },
@@ -164,6 +168,10 @@ export const deleteUser = async (req, res) => {
   const prisma = getPrismaClient();
   try {
     const { id } = req.params;
+
+    if (req.user.id !== id) {
+      return res.status(403).json({ error: 'You are not authorized to delete this user.' });
+    }
 
     await prisma.user.delete({
       where: { id },
