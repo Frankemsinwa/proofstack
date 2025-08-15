@@ -52,6 +52,10 @@ const router = express.Router();
  *         description: User registered successfully
  *       400:
  *         description: Invalid input
+ *       409:
+ *        description: User already exists
+ *       500:
+ *        description: Could not register user
  */
 router.post('/register', registerUser);
 /**
@@ -89,6 +93,8 @@ router.post('/register', registerUser);
  *                   $ref: '#/components/schemas/User'
  *       401:
  *         description: Invalid credentials
+ *       500:
+ *        description: Could not login user
  */
 router.post('/login', loginUser);
 /**
@@ -110,6 +116,8 @@ router.post('/login', loginUser);
  *                 $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
+ *       500:
+ *        description: Could not fetch users
  */
 router.get('/', authMiddleware, getUsers);
 /**
@@ -138,6 +146,8 @@ router.get('/', authMiddleware, getUsers);
  *         description: User not found
  *       401:
  *         description: Unauthorized
+ *       500:
+ *        description: Could not fetch user
  */
 router.get('/:id', authMiddleware, getUserById);
 /**
@@ -172,6 +182,10 @@ router.get('/:id', authMiddleware, getUserById);
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
+ *       403:
+ *        description: You are not authorized to update this user
+ *       500:
+ *        description: Could not update user
  */
 router.put('/:id', authMiddleware, updateUser);
 /**
@@ -190,12 +204,16 @@ router.put('/:id', authMiddleware, updateUser);
  *           type: string
  *         description: User ID
  *     responses:
- *       200:
+ *       204:
  *         description: User deleted successfully
  *       404:
  *         description: User not found
  *       401:
  *         description: Unauthorized
+ *       403:
+ *        description: You are not authorized to delete this user
+ *       500:
+ *        description: Could not delete user
  */
 router.delete('/:id', authMiddleware, deleteUser);
 

@@ -7,16 +7,138 @@ const router = express.Router();
 // All routes are protected
 router.use(protect);
 
-// POST /api/jobs - Create a new job (CLIENT only)
+/**
+ * @swagger
+ * /jobs:
+ *   post:
+ *     summary: Create a new job
+ *     description: Allows a client to post a new job. Only users with the 'client' role can use this endpoint.
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - description
+ *               - category
+ *               - budgetMin
+ *               - budgetMax
+ *               - locationPreference
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               budgetMin:
+ *                 type: number
+ *               budgetMax:
+ *                 type: number
+ *               locationPreference:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Job created successfully.
+ *       400:
+ *         description: Could not create job.
+ *       403:
+ *         description: Forbidden. Only clients can post jobs.
+ */
 router.post('/', createJob);
 
-// GET /api/jobs - Get all open jobs (TALENT can view)
+/**
+ * @swagger
+ * /jobs:
+ *   get:
+ *     summary: Get all open jobs
+ *     description: Retrieves a list of all open jobs for talent to view. Includes client information.
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of open jobs.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Job'
+ *       500:
+ *         description: Could not retrieve jobs.
+ */
 router.get('/', getAllJobs);
 
-// GET /api/jobs/:id - Get a single job by ID
+/**
+ * @swagger
+ * /jobs/{id}:
+ *   get:
+ *     summary: Get a single job by ID
+ *     description: Retrieves detailed information about a specific job, including client and proposal information.
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The job ID.
+ *     responses:
+ *       200:
+ *         description: Job details.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Job'
+ *       404:
+ *         description: Job not found.
+ *       500:
+ *         description: Could not retrieve job.
+ */
 router.get('/:id', getJobById);
 
-// PATCH /api/jobs/:id/status - Update job status (CLIENT only)
+/**
+ * @swagger
+ * /jobs/{id}/status:
+ *   patch:
+ *     summary: Update job status
+ *     description: Allows a client to update the status of their job posting.
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The job ID.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [open, in_progress, closed]
+ *     responses:
+ *       200:
+ *         description: Job status updated successfully.
+ *       400:
+ *         description: Could not update job status.
+ *       404:
+ *         description: Job not found or not authorized.
+ */
 router.patch('/:id/status', updateJobStatus);
 
 export default router;
