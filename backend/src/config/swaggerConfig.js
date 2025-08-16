@@ -10,10 +10,10 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000/api-docs',
+        url: 'http://localhost:5000/api',
       },
       {
-        url: 'https://proofstack-backend.onrender.com/api-docs',
+        url: 'https://proofstack-backend.onrender.com/api',
       },
     ],
     components: {
