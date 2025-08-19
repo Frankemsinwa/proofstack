@@ -20,7 +20,7 @@ A mobile platform that connects skilled digital talents with real-world jobs and
 * **Frontend**: React Native + Expo (cross-platform mobile experience)
 * **Backend**: Node.js + Express + Prisma ORM
 * **Database**: PostgreSQL (hosted via Prisma Postgres)
-* **Auth**: Email/password auth (JWT, Clerk optional later)
+* **Auth**: Email/password auth (JWT)
 
 ---
 
