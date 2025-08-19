@@ -30,34 +30,38 @@ enum ProposalStatus {
 }
 
 model User {
-  id                String      @id @default(uuid())
-  email             String      @unique
-  passwordHash      String      @map("password_hash")
-  fullName          String      @map("full_name")
-  username          String      @unique
-  profileImageUrl   String?     @map("profile_image_url")
-  bio               String?
-  location          String?
-  role              Role
-  trustScore        Int         @default(0) @map("trust_score")
-  createdAt         DateTime    @default(now()) @map("created_at")
-  otp               String?
-  otpExpiresAt      DateTime?   @map("otp_expires_at")
-  isVerified        Boolean     @default(false) @map("is_verified")
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String    @map("password_hash")
+  fullName        String    @map("full_name")
+  username        String    @unique
+  profileImageUrl String?   @map("profile_image_url")
+  bio             String?
+  location        String?
+  role            Role
+  trustScore      Int       @default(0) @map("trust_score")
+  isAdmin         Boolean   @default(false)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  otp             String?
+  otpExpiresAt    DateTime? @map("otp_expires_at")
+  isVerified      Boolean   @default(false) @map("is_verified")
 
   // Relations
-  skills            UserSkill[]
-  portfolioProjects PortfolioProject[]
-  referralsGiven    Referral[]  @relation("ReferralsGiven")
-  referralsReceived Referral[]  @relation("ReferralsReceived")
-  jobPosts          JobPost[]   @relation("ClientJobs")
-  proposals         Proposal[]
-  challengeSubs     ChallengeSubmission[]
+  skills             UserSkill[]
+  portfolioProjects  PortfolioProject[]
+  referralsGiven     Referral[]            @relation("ReferralsGiven")
+  referralsReceived  Referral[]            @relation("ReferralsReceived")
+  jobPosts           JobPost[]             @relation("ClientJobs")
+  proposals          Proposal[]
+  challengesCreated  ProofChallenge[]      @relation("CreatedChallenges")
+  challengesApproved ProofChallenge[]      @relation("ApprovedChallenges")
+  challengeSubs      ChallengeSubmission[]
+  trustEvents        TrustEvent[]
 }
 
 model Skill {
-  id    String      @id @default(uuid())
-  name  String
+  id   String @id @default(uuid())
+  name String
 
   // Relations
   users UserSkill[]
@@ -68,8 +72,8 @@ model UserSkill {
   skillId   String
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id])
-  skill     Skill    @relation(fields: [skillId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+  skill Skill @relation(fields: [skillId], references: [id])
 
   @@id([userId, skillId])
 }
@@ -83,72 +87,95 @@ model PortfolioProject {
   media       String[]
   createdAt   DateTime @default(now()) @map("created_at")
 
-  user        User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Referral {
-  id               String       @id @default(uuid())
-  referredUserId   String       @map("referred_user_id")
-  referrerId       String       @map("referrer_id")
-  testimonialText  String       @map("testimonial_text")
-  rating           Int
-  type             ReferralType
-  isVerified       Boolean      @default(false) @map("is_verified")
-  createdAt        DateTime     @default(now()) @map("created_at")
+  id              String       @id @default(uuid())
+  referredUserId  String       @map("referred_user_id")
+  referrerId      String       @map("referrer_id")
+  testimonialText String       @map("testimonial_text")
+  rating          Int
+  type            ReferralType
+  isVerified      Boolean      @default(false) @map("is_verified")
+  createdAt       DateTime     @default(now()) @map("created_at")
 
-  referredUser     User         @relation("ReferralsReceived", fields: [referredUserId], references: [id])
-  referrer         User         @relation("ReferralsGiven",    fields: [referrerId],     references: [id])
+  referredUser User @relation("ReferralsReceived", fields: [referredUserId], references: [id])
+  referrer     User @relation("ReferralsGiven", fields: [referrerId], references: [id])
 }
 
 model JobPost {
-  id                  String       @id @default(uuid()) 
-  clientId            String       @map("client_id")
-  title               String
-  description         String
-  category            String
-  budgetMin           Float        @map("budget_min")
-  budgetMax           Float        @map("budget_max")
-  locationPreference  String       @map("location_preference")
-  status              JobStatus
-  createdAt           DateTime     @default(now()) @map("created_at")
+  id                 String    @id @default(uuid())
+  clientId           String    @map("client_id")
+  title              String
+  description        String
+  category           String
+  budgetMin          Float     @map("budget_min")
+  budgetMax          Float     @map("budget_max")
+  locationPreference String    @map("location_preference")
+  status             JobStatus
+  createdAt          DateTime  @default(now()) @map("created_at")
 
-  client              User         @relation("ClientJobs", fields: [clientId], references: [id])
-  proposals           Proposal[]
+  client         User            @relation("ClientJobs", fields: [clientId], references: [id])
+  proposals      Proposal[]
+  proofChallenge ProofChallenge?
 }
 
 model Proposal {
-  id             String         @id @default(uuid())
-  jobPostId      String         @map("job_post_id")
-  userId         String
-  coverLetter    String         @map("cover_letter")
-  attachmentUrl  String?        @map("attachment_url")
-  status         ProposalStatus
-  createdAt      DateTime       @default(now()) @map("created_at")
+  id            String         @id @default(uuid())
+  jobPostId     String         @map("job_post_id")
+  userId        String
+  coverLetter   String         @map("cover_letter")
+  attachmentUrl String?        @map("attachment_url")
+  status        ProposalStatus
+  createdAt     DateTime       @default(now()) @map("created_at")
 
-  jobPost        JobPost        @relation(fields: [jobPostId], references: [id])
-  user           User           @relation(fields: [userId], references: [id])
+  jobPost JobPost @relation(fields: [jobPostId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
 }
 
 model ProofChallenge {
-  id          String    @id @default(uuid())
-  title       String
-  brief       String
-  deadline    DateTime
-  winnerIds   String[]  @map("winner_ids")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id            String    @id @default(uuid())
+  title         String
+  brief         String
+  deadline      DateTime
+  isBlackFriday Boolean   @default(false)
+  eventDate     DateTime
+  approved      Boolean   @default(false)
+  approvedAt    DateTime?
+  approvedById  String?
+  createdById   String
+  jobPostId     String?   @unique
+  winnerIds     String[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
+  approvedBy  User?                 @relation("ApprovedChallenges", fields: [approvedById], references: [id])
+  createdBy   User                  @relation("CreatedChallenges", fields: [createdById], references: [id])
+  jobPost     JobPost?              @relation(fields: [jobPostId], references: [id])
   submissions ChallengeSubmission[]
 }
 
 model ChallengeSubmission {
-  id           String   @id @default(uuid())
-  challengeId  String   @map("challenge_id")
-  userId       String
-  projectUrl   String   @map("project_url")
-  description  String
-  votes        Int
-  createdAt    DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  challengeId String   @map("challenge_id")
+  userId      String
+  projectUrl  String   @map("project_url")
+  description String
+  votes       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  challenge    ProofChallenge @relation(fields: [challengeId], references: [id])
-  user         User           @relation(fields: [userId], references: [id])
+  challenge ProofChallenge @relation(fields: [challengeId], references: [id])
+  user      User           @relation(fields: [userId], references: [id])
+}
+
+model TrustEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  delta     Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }

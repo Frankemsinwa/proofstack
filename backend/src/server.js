@@ -8,6 +8,7 @@ import portfolioRoutes from './routes/portfolio.routes.js';
 import referralRoutes from './routes/referral.routes.js';
 import jobRoutes from './routes/job.routes.js';
 import proposalRoutes from './routes/proposal.routes.js';
+import bfRoutes from './routes/bf.routes.js';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swaggerConfig.js';
@@ -28,6 +29,7 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/proposals', proposalRoutes);
+app.use('/api/bf', bfRoutes);
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
