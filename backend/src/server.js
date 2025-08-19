@@ -11,6 +11,7 @@ import proposalRoutes from './routes/proposal.routes.js';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swaggerConfig.js';
+import cleanupUnverifiedAccounts from './jobs/cleanup.js';
 
 
 const app = express();
@@ -41,3 +42,6 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port http://localhost:${PORT}`);
 });
+
+// Start the cron job
+cleanupUnverifiedAccounts.start();
