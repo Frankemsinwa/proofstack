@@ -6,6 +6,7 @@ import {
   getUserById,
   updateUser,
   deleteUser,
+  verifyOtp,
 } from '../controllers/user.controller.js';
 import authMiddleware from '../middleware/auth.middleware.js';
 
@@ -97,6 +98,39 @@ router.post('/register', registerUser);
  *        description: Could not login user
  */
 router.post('/login', loginUser);
+
+/**
+ * @swagger
+ * /users/verify-otp:
+ *   post:
+ *     summary: Verify OTP
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Account verified successfully
+ *       400:
+ *         description: Invalid or expired OTP
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Could not verify OTP
+ */
+router.post('/verify-otp', verifyOtp);
+
 /**
  * @swagger
  * /users:

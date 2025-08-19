@@ -1,6 +1,13 @@
 import getPrismaClient from '../utils/prisma.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { Resend } from 'resend';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -27,6 +34,8 @@ export const registerUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     const user = await prisma.user.create({
       data: {
@@ -35,15 +44,27 @@ export const registerUser = async (req, res) => {
         fullName,
         role,
         passwordHash: hashedPassword,
+        otp,
+        otpExpiresAt,
+        isVerified: false,
       },
     });
-    
 
-    const token = generateToken(user.id);
+    // Send OTP email
+    try {
+      await resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: email,
+        subject: 'Your ProofStack Verification Code',
+        html: `<p>Your OTP is: <strong>${otp}</strong>. It will expire in 15 minutes.</p>`,
+      });
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // Silently fail for now, but in a real app, this should be handled
+    }
 
-    // Return user info and token
-    const { passwordHash, ...userWithoutPassword } = user;
-    res.status(201).json({ user: userWithoutPassword, token });
+    res.status(201).json({ message: 'User registered successfully. Please check your email for the OTP.' });
+
   } catch (error) {
     console.error('Register Error:', error);
     res.status(500).json({ error: 'Could not register user.' });
@@ -68,6 +89,10 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
+    if (!user.isVerified) {
+      return res.status(403).json({ error: 'Please verify your email before logging in.' });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
@@ -76,12 +101,50 @@ export const loginUser = async (req, res) => {
 
     const token = generateToken(user.id);
 
-    // Return user info and token
-    const { passwordHash, ...userWithoutPassword } = user;
+    // Return user info and token, excluding sensitive fields
+    const { passwordHash, otp, otpExpiresAt, ...userWithoutPassword } = user;
     res.status(200).json({ user: userWithoutPassword, token });
   } catch (error) {
     console.error('Login Error:', error);
     res.status(500).json({ error: 'Could not login user.' });
+  }
+};
+
+// Verify OTP
+export const verifyOtp = async (req, res) => {
+  const prisma = getPrismaClient();
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required.' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    if (user.otp !== otp || new Date() > user.otpExpiresAt) {
+      return res.status(400).json({ error: 'Invalid or expired OTP.' });
+    }
+
+    await prisma.user.update({
+      where: { email },
+      data: {
+        isVerified: true,
+        otp: null,
+        otpExpiresAt: null,
+      },
+    });
+
+    res.status(200).json({ message: 'Account verified successfully.' });
+  } catch (error) {
+    console.error('OTP Verification Error:', error);
+    res.status(500).json({ error: 'Could not verify OTP.' });
   }
 };
 
@@ -95,7 +158,7 @@ export const getUsers = async (req, res) => {
         username: true,
         email: true,
         role: true,
-        joinedAt: true,
+        createdAt: true,
       },
     });
     res.json(users);
@@ -118,7 +181,7 @@ export const getUserById = async (req, res) => {
         username: true,
         email: true,
         role: true,
-        joinedAt: true,
+        createdAt: true,
       },
     });
 
@@ -152,7 +215,7 @@ export const updateUser = async (req, res) => {
         username: true,
         email: true,
         role: true,
-        joinedAt: true,
+        createdAt: true,
       },
     });
 

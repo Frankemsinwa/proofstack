@@ -40,7 +40,10 @@ model User {
   location          String?
   role              Role
   trustScore        Int         @default(0) @map("trust_score")
-  joinedAt          DateTime    @default(now()) @map("joined_at")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  otp               String?
+  otpExpiresAt      DateTime?   @map("otp_expires_at")
+  isVerified        Boolean     @default(false) @map("is_verified")
 
   // Relations
   skills            UserSkill[]
