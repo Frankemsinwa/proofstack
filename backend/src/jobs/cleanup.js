@@ -1,7 +1,5 @@
 import cron from 'node-cron';
-import getPrismaClient from '../config/prismaClient.js';
-
-const prisma = getPrismaClient();
+import prisma from '../config/prismaClient.js';
 
 // Schedule a job to run every 24 hours to clean up unverified accounts
 const cleanupUnverifiedAccounts = cron.schedule('0 0 * * *', async () => {
