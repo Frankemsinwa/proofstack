@@ -1,4 +1,4 @@
-import getPrismaClient from '../utils/prisma.js';
+import getPrismaClient from '../config/prismaClient.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -148,8 +148,62 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
-// Get all users
-export const getUsers = async (req, res) => {
+// Resend OTP
+export const resendOtp = async (req, res) => {
+  const prisma = getPrismaClient();
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ error: 'This account is already verified.' });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await prisma.user.update({
+      where: { email },
+      data: {
+        otp,
+        otpExpiresAt,
+      },
+    });
+
+    // Send OTP email
+    try {
+      await resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: email,
+        subject: 'Your New ProofStack Verification Code',
+        html: `<p>Your new OTP is: <strong>${otp}</strong>. It will expire in 15 minutes.</p>`,
+      });
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // Silently fail for now, but in a real app, this should be handled
+    }
+
+    res.status(200).json({ message: 'A new OTP has been sent to your email.' });
+
+  } catch (error) {
+    console.error('Resend OTP Error:', error);
+    res.status(500).json({ error: 'Could not resend OTP.' });
+  }
+};
+
+// Get all users (for admin purposes)
+export const getAllUsers = async (req, res) => {
   const prisma = getPrismaClient();
   try {
     const users = await prisma.user.findMany({

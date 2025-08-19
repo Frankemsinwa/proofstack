@@ -2,11 +2,12 @@ import express from 'express';
 import {
   registerUser,
   loginUser,
-  getUsers,
+  getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
   verifyOtp,
+  resendOtp,
 } from '../controllers/user.controller.js';
 import authMiddleware from '../middleware/auth.middleware.js';
 
@@ -133,6 +134,35 @@ router.post('/verify-otp', verifyOtp);
 
 /**
  * @swagger
+ * /users/resend-otp:
+ *   post:
+ *     summary: Resend OTP
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: A new OTP has been sent to your email.
+ *       400:
+ *         description: Email is required or account is already verified.
+ *       404:
+ *         description: User not found.
+ *       500:
+ *         description: Could not resend OTP.
+ */
+router.post('/resend-otp', resendOtp);
+
+/**
+ * @swagger
  * /users:
  *   get:
  *     tags: [Users]
@@ -153,7 +183,7 @@ router.post('/verify-otp', verifyOtp);
  *       500:
  *        description: Could not fetch users
  */
-router.get('/', authMiddleware, getUsers);
+router.get('/', authMiddleware, getAllUsers);
 /**
  * @swagger
  * /users/{id}:
