@@ -279,7 +279,7 @@ export const convertBFToJob = async (req, res) => {
       data: {
         clientId,
         title: challenge.title,
-        description: challenge.brief,
+        description: challenge.description, // Changed from challenge.brief to challenge.description
         category: 'Black Friday Challenge', // Or some other default
         budgetMin: 0, // Or some other default
         budgetMax: 0, // Or some other default
