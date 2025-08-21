@@ -4,7 +4,7 @@ import { isFridayNow, getEndOfFriday } from '../utils/date.js';
 // Note: Timezone for all date operations is Africa/Lagos.
 
 export const createBFChallenge = async (req, res) => {
-  // Ensure that challenges are only created on a Friday in Africa/Lagos timezone.
+  // Ensure that challenges are only created on a Friday in UTC.
   if (!isFridayNow()) {
     return res.status(403).json({ error: 'Black Friday challenges can only be created on a Friday.' });
   }
@@ -14,12 +14,18 @@ export const createBFChallenge = async (req, res) => {
 
   // The event date is the current Friday.
   const eventDate = new Date();
-  eventDate.setHours(0, 0, 0, 0);
+  eventDate.setUTCHours(0, 0, 0, 0);
 
   // The deadline is the end of the current Friday.
   const deadline = getEndOfFriday();
 
   try {
+    const alreadyPosted = await prisma.proofChallenge.findFirst({
+      where: { clientId, isBlackFriday: true, eventDate },
+    });
+    if (alreadyPosted) {
+      return res.status(400).json({ error: 'You have already submitted a challenge this Friday.' });
+    }
     const newChallenge = await prisma.proofChallenge.create({
       data: {
         title,
@@ -62,10 +68,10 @@ export const approveBFChallenge = async (req, res) => {
     }
 
     const startOfDay = new Date(challenge.eventDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(challenge.eventDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
     // A maximum of 10 Black Friday challenges can be approved for a single day.
     // This limit is enforced at the time of approval, not creation.
@@ -103,6 +109,11 @@ export const approveBFChallenge = async (req, res) => {
 export const setBFWinners = async (req, res) => {
   const { challengeId } = req.params;
   const { winnerIds } = req.body;
+
+  const uniqueWinners = [...new Set(winnerIds)];
+  if (uniqueWinners.length !== winnerIds.length) {
+    return res.status(400).json({ error: 'Duplicate winners not allowed.' });
+  }
 
   if (!req.user.isAdmin) {
     return res.status(403).json({ error: 'You are not authorized to perform this action.' });
@@ -160,10 +171,10 @@ export const listTodayBFChallenges = async (req, res) => {
   try {
     const today = new Date();
     const startOfDay = new Date(today);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
     const challenges = await prisma.proofChallenge.findMany({
       where: {
@@ -312,10 +323,55 @@ export const getBFChallengeConversionAnalytics = async (req, res) => {
 
     const conversionRate = totalBFChallenges > 0 ? (convertedChallenges / totalBFChallenges) * 100 : 0;
 
+    const submissions = await prisma.challengeSubmission.findMany({
+      where: {
+        challenge: {
+          isBlackFriday: true,
+        },
+      },
+    });
+
+    const totalSubmissions = submissions.length;
+
+    const averageSubmissionsPerChallenge = totalBFChallenges > 0 ? totalSubmissions / totalBFChallenges : 0;
+
+    const allWinners = await prisma.proofChallenge.findMany({
+      where: {
+        isBlackFriday: true,
+        winnerIds: {
+          isEmpty: false,
+        },
+      },
+      select: {
+        winnerIds: true,
+      },
+    });
+
+    const winnerCounts = allWinners.flatMap(c => c.winnerIds).reduce((acc, winnerId) => {
+      acc[winnerId] = (acc[winnerId] || 0) + 1;
+      return acc;
+    }, {});
+
+    const topWinner = Object.keys(winnerCounts).reduce((a, b) => (winnerCounts[a] > winnerCounts[b] ? a : b), null);
+
+    const totalTrustScoreAwarded = await prisma.trustEvent.aggregate({
+      _sum: {
+        delta: true,
+      },
+      where: {
+        reason: {
+          contains: 'Black Friday',
+        },
+      },
+    });
+
     res.status(200).json({
       totalBFChallenges,
       convertedChallenges,
       conversionRate: `${conversionRate.toFixed(2)}%`,
+      averageSubmissionsPerChallenge: averageSubmissionsPerChallenge.toFixed(2),
+      topWinner,
+      totalTrustScoreAwarded: totalTrustScoreAwarded._sum.delta || 0,
     });
   } catch (error) {
     console.error('Error fetching BF challenge conversion analytics:', error);

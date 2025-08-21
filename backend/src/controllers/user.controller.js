@@ -2,12 +2,7 @@ import getPrismaClient from '../config/prismaClient.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { Resend } from 'resend';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import transporter from '../config/nodemailer.js';
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -50,17 +45,16 @@ export const registerUser = async (req, res) => {
       },
     });
 
-    // Send OTP email
     try {
-      await resend.emails.send({
-        from: 'onboarding@resend.dev',
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
         to: email,
-        subject: 'Your ProofStack Verification Code',
+        subject: 'ProofStack OTP Verification',
         html: `<p>Your OTP is: <strong>${otp}</strong>. It will expire in 15 minutes.</p>`,
       });
     } catch (emailError) {
       console.error('Email sending error:', emailError);
-      // Silently fail for now, but in a real app, this should be handled
+      return res.status(500).json({ error: 'Could not send OTP email.' });
     }
 
     res.status(201).json({ message: 'User registered successfully. Please check your email for the OTP.' });
@@ -181,17 +175,16 @@ export const resendOtp = async (req, res) => {
       },
     });
 
-    // Send OTP email
     try {
-      await resend.emails.send({
-        from: 'onboarding@resend.dev',
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
         to: email,
-        subject: 'Your New ProofStack Verification Code',
+        subject: 'ProofStack OTP Verification',
         html: `<p>Your new OTP is: <strong>${otp}</strong>. It will expire in 15 minutes.</p>`,
       });
     } catch (emailError) {
       console.error('Email sending error:', emailError);
-      // Silently fail for now, but in a real app, this should be handled
+      return res.status(500).json({ error: 'Could not send OTP email.' });
     }
 
     res.status(200).json({ message: 'A new OTP has been sent to your email.' });
