@@ -1,4 +1,4 @@
-import getPrismaClient from '../config/prismaClient.js';
+import prisma from '../config/prismaClient.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -12,7 +12,6 @@ const generateToken = (userId) => {
 
 // Register a new user
 export const registerUser = async (req, res) => {
-  const prisma = getPrismaClient();
   try {
     const { email, name, fullName, role, password } = req.body;
 
@@ -59,7 +58,7 @@ export const registerUser = async (req, res) => {
 
     res.status(201).json({ message: 'User registered successfully. Please check your email for the OTP.' });
 
-  } catch (error) {
+  } catch (error) { // Removed `async` from catch block
     console.error('Register Error:', error);
     res.status(500).json({ error: 'Could not register user.' });
   }
@@ -67,7 +66,6 @@ export const registerUser = async (req, res) => {
 
 // Login user
 export const loginUser = async (req, res) => {
-  const prisma = getPrismaClient();
   try {
     const { email, password } = req.body;
 
@@ -106,7 +104,6 @@ export const loginUser = async (req, res) => {
 
 // Verify OTP
 export const verifyOtp = async (req, res) => {
-  const prisma = getPrismaClient();
   try {
     const { email, otp } = req.body;
 
@@ -144,7 +141,6 @@ export const verifyOtp = async (req, res) => {
 
 // Resend OTP
 export const resendOtp = async (req, res) => {
-  const prisma = getPrismaClient();
   try {
     const { email } = req.body;
 
@@ -197,7 +193,6 @@ export const resendOtp = async (req, res) => {
 
 // Get all users (for admin purposes)
 export const getAllUsers = async (req, res) => {
-  const prisma = getPrismaClient();
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -217,7 +212,6 @@ export const getAllUsers = async (req, res) => {
 
 // Get a single user by ID
 export const getUserById = async (req, res) => {
-  const prisma = getPrismaClient();
   try {
     const { id } = req.params;
 
@@ -245,7 +239,6 @@ export const getUserById = async (req, res) => {
 
 // Update user (excluding password for now)
 export const updateUser = async (req, res) => {
-  const prisma = getPrismaClient();
   try {
     const { id } = req.params;
     const { username, role } = req.body;
@@ -275,7 +268,6 @@ export const updateUser = async (req, res) => {
 
 // Delete a user
 export const deleteUser = async (req, res) => {
-  const prisma = getPrismaClient();
   try {
     const { id } = req.params;
 
