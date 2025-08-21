@@ -1,22 +1,26 @@
 import prisma from '../config/prismaClient.js';
+import { isFridayNow, getEndOfFriday } from '../utils/date.js';
+
+// Note: Timezone for all date operations is Africa/Lagos.
 
 export const createBFChallenge = async (req, res) => {
-  const today = new Date();
-  if (today.getDay() !== 5) { // 5 = Friday
+  // Ensure that challenges are only created on a Friday in Africa/Lagos timezone.
+  if (!isFridayNow()) {
     return res.status(403).json({ error: 'Black Friday challenges can only be created on a Friday.' });
   }
 
   const { title, description, requirements } = req.body;
   const clientId = req.user.id;
 
-  // Calculate the date of the upcoming Friday
-  const eventDate = new Date(today);
-  eventDate.setDate(today.getDate() + (5 - today.getDay() + 7) % 7);
+  // The event date is the current Friday.
+  const eventDate = new Date();
   eventDate.setHours(0, 0, 0, 0);
 
+  // The deadline is the end of the current Friday.
+  const deadline = getEndOfFriday();
 
   try {
-    const newChallenge = await prisma.challenge.create({
+    const newChallenge = await prisma.proofChallenge.create({
       data: {
         title,
         description,
@@ -24,11 +28,13 @@ export const createBFChallenge = async (req, res) => {
         clientId,
         isBlackFriday: true,
         eventDate,
+        deadline,
         approved: false,
       },
     });
     res.status(201).json(newChallenge);
   } catch (error) {
+    // Log any errors that occur during challenge creation.
     console.error('Error creating Black Friday challenge:', error);
     res.status(500).json({ error: 'An error occurred while creating the challenge.' });
   }
@@ -61,6 +67,8 @@ export const approveBFChallenge = async (req, res) => {
     const endOfDay = new Date(challenge.eventDate);
     endOfDay.setHours(23, 59, 59, 999);
 
+    // A maximum of 10 Black Friday challenges can be approved for a single day.
+    // This limit is enforced at the time of approval, not creation.
     const approvedCount = await prisma.proofChallenge.count({
       where: {
         isBlackFriday: true,
@@ -110,6 +118,8 @@ export const setBFWinners = async (req, res) => {
       return res.status(404).json({ error: 'Challenge not found.' });
     }
 
+    // Ensure that all winner IDs provided have actually submitted work for the challenge.
+    // This prevents the client from setting fake winners.
     const submittedUserIds = challenge.submissions.map(sub => sub.userId);
     const allWinnersSubmitted = winnerIds.every(id => submittedUserIds.includes(id));
 
@@ -276,5 +286,39 @@ export const convertBFToJob = async (req, res) => {
   } catch (error) {
     console.error('Error converting Black Friday challenge to job:', error);
     res.status(500).json({ error: 'An error occurred while converting the challenge.' });
+  }
+};
+
+/**
+ * Provides analytics on the conversion of Black Friday challenges to paid jobs.
+ * This is an admin-only endpoint.
+ */
+export const getBFChallengeConversionAnalytics = async (req, res) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ error: 'You are not authorized to perform this action.' });
+  }
+
+  try {
+    const totalBFChallenges = await prisma.proofChallenge.count({
+      where: { isBlackFriday: true },
+    });
+
+    const convertedChallenges = await prisma.proofChallenge.count({
+      where: {
+        isBlackFriday: true,
+        jobPostId: { not: null },
+      },
+    });
+
+    const conversionRate = totalBFChallenges > 0 ? (convertedChallenges / totalBFChallenges) * 100 : 0;
+
+    res.status(200).json({
+      totalBFChallenges,
+      convertedChallenges,
+      conversionRate: `${conversionRate.toFixed(2)}%`,
+    });
+  } catch (error) {
+    console.error('Error fetching BF challenge conversion analytics:', error);
+    res.status(500).json({ error: 'An error occurred while fetching analytics.' });
   }
 };
