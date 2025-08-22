@@ -16,7 +16,7 @@ import admin from '../middleware/admin.middleware.js';
 
 /**
  * @swagger
- * /challenges:
+ * /bf/challenges:
  *   post:
  *     summary: Create a new Black Friday challenge.
  *     description: Allows a client to create a new Black Friday challenge. This can only be done on a Friday.
@@ -41,12 +41,14 @@ import admin from '../middleware/admin.middleware.js';
  *         description: Challenge created successfully.
  *       '403':
  *         description: Forbidden. Challenges can only be created on a Friday.
+ *       '400':
+ *         description: You have already submitted a challenge this Friday.
  */
 router.post('/challenges', protect, createBFChallenge);
 
 /**
  * @swagger
- * /challenges/{challengeId}/convert:
+ * /bf/challenges/{challengeId}/convert:
  *   post:
  *     summary: Convert a Black Friday challenge to a job post.
  *     description: Allows the client who created the challenge to convert it into a job post.
@@ -71,7 +73,7 @@ router.post('/challenges/:challengeId/convert', protect, convertBFToJob);
 
 /**
  * @swagger
- * /challenges/{challengeId}/approve:
+ * /bf/challenges/{challengeId}/approve:
  *   patch:
  *     summary: Approve a Black Friday challenge.
  *     description: Allows an admin to approve a Black Friday challenge.
@@ -96,7 +98,7 @@ router.patch('/challenges/:challengeId/approve', protect, admin, approveBFChalle
 
 /**
  * @swagger
- * /challenges/{challengeId}/winners:
+ * /bf/challenges/{challengeId}/winners:
  *   post:
  *     summary: Set the winners for a Black Friday challenge.
  *     description: Allows an admin to set the winners for a Black Friday challenge.
@@ -132,7 +134,7 @@ router.post('/challenges/:challengeId/winners', protect, admin, setBFWinners);
 
 /**
  * @swagger
- * /challenges/analytics:
+ * /bf/challenges/analytics:
  *   get:
  *     summary: Get analytics for Black Friday challenges.
  *     description: Retrieves analytics on the conversion of Black Friday challenges to paid jobs. Admin only.
@@ -149,7 +151,7 @@ router.get('/challenges/analytics', protect, admin, getBFChallengeConversionAnal
 
 /**
  * @swagger
- * /challenges/today:
+ * /bf/challenges/today:
  *   get:
  *     summary: List today's Black Friday challenges.
  *     description: Retrieves a list of approved Black Friday challenges for the current day.
@@ -164,7 +166,7 @@ router.get('/challenges/today', protect, listTodayBFChallenges);
 
 /**
  * @swagger
- * /challenges/{challengeId}/submit:
+ * /bf/challenges/{challengeId}/submit:
  *   post:
  *     summary: Submit work for a Black Friday challenge.
  *     description: Allows a talent to submit their work for a Black Friday challenge.

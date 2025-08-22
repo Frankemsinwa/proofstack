@@ -21,7 +21,7 @@ export const createBFChallenge = async (req, res) => {
 
   try {
     const alreadyPosted = await prisma.proofChallenge.findFirst({
-      where: { clientId, isBlackFriday: true, eventDate },
+      where: { createdById: clientId, isBlackFriday: true, eventDate },
     });
     if (alreadyPosted) {
       return res.status(400).json({ error: 'You have already submitted a challenge this Friday.' });
@@ -29,9 +29,8 @@ export const createBFChallenge = async (req, res) => {
     const newChallenge = await prisma.proofChallenge.create({
       data: {
         title,
-        description,
-        requirements,
-        clientId,
+        brief: description, // The schema has 'brief' not 'description'
+        createdById: clientId,
         isBlackFriday: true,
         eventDate,
         deadline,
@@ -279,7 +278,7 @@ export const convertBFToJob = async (req, res) => {
       data: {
         clientId,
         title: challenge.title,
-        description: challenge.description, // Changed from challenge.brief to challenge.description
+        description: challenge.brief,
         category: 'Black Friday Challenge', // Or some other default
         budgetMin: 0, // Or some other default
         budgetMax: 0, // Or some other default
