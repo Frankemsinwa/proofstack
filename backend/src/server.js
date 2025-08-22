@@ -9,10 +9,12 @@ import referralRoutes from './routes/referral.routes.js';
 import jobRoutes from './routes/job.routes.js';
 import proposalRoutes from './routes/proposal.routes.js';
 import bfRoutes from './routes/bf.routes.js';
+import walletRoutes from './routes/wallet.routes.js';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swaggerConfig.js';
 import cleanupUnverifiedAccounts from './jobs/cleanup.js';
+import { paystackWebhookHandler } from './controllers/webhook.controller.js';
 
 
 const app = express();
@@ -30,6 +32,14 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/proposals', proposalRoutes);
 app.use('/api/bf', bfRoutes);
+app.use('/api/wallet', walletRoutes);
+
+// Paystack webhook route
+app.post(
+  '/api/webhooks/paystack',
+  express.raw({ type: 'application/json' }),
+  paystackWebhookHandler
+);
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

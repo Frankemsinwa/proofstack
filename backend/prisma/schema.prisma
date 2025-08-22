@@ -29,6 +29,26 @@ enum ProposalStatus {
   rejected
 }
 
+enum Currency {
+  NGN
+  USD
+}
+
+enum TxnType {
+  FUNDING
+  HOLD
+  RELEASE
+  PAYOUT
+  REFUND
+  FEE
+}
+
+enum TxnStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 model User {
   id              String    @id @default(uuid())
   email           String    @unique
@@ -45,6 +65,11 @@ model User {
   otp             String?
   otpExpiresAt    DateTime? @map("otp_expires_at")
   isVerified      Boolean   @default(false) @map("is_verified")
+  
+  // Wallet fields
+  walletBalance   Int       @default(0) @map("wallet_balance")
+  currency        Currency  @default(NGN)
+  paystackRecipientCode String? @map("paystack_recipient_code")
 
   // Relations
   skills             UserSkill[]
@@ -57,6 +82,8 @@ model User {
   challengesApproved ProofChallenge[]      @relation("ApprovedChallenges")
   challengeSubs      ChallengeSubmission[]
   trustEvents        TrustEvent[]
+  transactions       Transaction[]
+  withdrawalRequests WithdrawalRequest[]
 }
 
 model Skill {
@@ -115,10 +142,14 @@ model JobPost {
   locationPreference String    @map("location_preference")
   status             JobStatus
   createdAt          DateTime  @default(now()) @map("created_at")
+  
+  // Escrow field
+  escrowBalance      Int       @default(0) @map("escrow_balance")
 
   client         User            @relation("ClientJobs", fields: [clientId], references: [id])
   proposals      Proposal[]
   proofChallenge ProofChallenge?
+  transactions   Transaction[]
 }
 
 model Proposal {
@@ -176,6 +207,38 @@ model TrustEvent {
   delta     Int
   reason    String
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id        String    @id @default(uuid())
+  userId    String
+  jobId     String?
+  type      TxnType
+  status    TxnStatus @default(PENDING)
+  amount    Int       // kobo
+  currency  Currency  @default(NGN)
+  reference String    @unique
+  meta      Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  job  JobPost? @relation(fields: [jobId], references: [id])
+}
+
+model WithdrawalRequest {
+  id          String    @id @default(uuid())
+  userId      String
+  amount      Int
+  currency    Currency  @default(NGN)
+  status      TxnStatus @default(PENDING)
+  recipientId String?   @map("recipient_id")
+  reference   String    @unique
+  meta        Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 }

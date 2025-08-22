@@ -11,8 +11,8 @@ router.use(protect);
  * @swagger
  * /jobs:
  *   post:
- *     summary: Create a new job
- *     description: Allows a client to post a new job. Only users with the 'client' role can use this endpoint.
+ *     summary: Create a new job with escrow
+ *     description: Allows a client to post a new job with escrow funding. Only users with the 'client' role can use this endpoint.
  *     tags: [Jobs]
  *     security:
  *       - bearerAuth: []
@@ -26,8 +26,7 @@ router.use(protect);
  *               - title
  *               - description
  *               - category
- *               - budgetMin
- *               - budgetMax
+ *               - budgetNaira
  *               - locationPreference
  *             properties:
  *               title:
@@ -36,17 +35,16 @@ router.use(protect);
  *                 type: string
  *               category:
  *                 type: string
- *               budgetMin:
+ *               budgetNaira:
  *                 type: number
- *               budgetMax:
- *                 type: number
+ *                 description: Budget amount in Naira (will be converted to kobo for escrow)
  *               locationPreference:
  *                 type: string
  *     responses:
  *       201:
- *         description: Job created successfully.
+ *         description: Job created successfully with escrow.
  *       400:
- *         description: Could not create job.
+ *         description: Could not create job or insufficient funds.
  *       403:
  *         description: Forbidden. Only clients can post jobs.
  */
