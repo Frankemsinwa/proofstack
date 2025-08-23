@@ -1,4 +1,4 @@
-import { post, get } from 'axios';
+import axios from 'axios';
 import { createHmac } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
@@ -20,7 +20,7 @@ class PaystackService {
   async initializeTransaction({ email, amount, metadata, callback_url }) {
     try {
       const reference = this.generateReference();
-      const response = await post(
+      const response = await axios.post(
         `${this.baseUrl}/transaction/initialize`,
         {
           email,
@@ -41,7 +41,7 @@ class PaystackService {
   // Verify transaction
   async verifyTransaction(reference) {
     try {
-      const response = await get(
+      const response = await axios.get(
         `${this.baseUrl}/transaction/verify/${reference}`,
         { headers: this.headers }
       );
@@ -55,7 +55,7 @@ class PaystackService {
   // Create a transfer recipient
   async createTransferRecipient({ name, account_number, bank_code, currency }) {
     try {
-      const response = await post(
+      const response = await axios.post(
         `${this.baseUrl}/transferrecipient`,
         {
           type: 'nuban',
@@ -76,7 +76,7 @@ class PaystackService {
   // Initiate transfer
   async initiateTransfer({ amount, recipient, reason, reference }) {
     try {
-      const response = await post(
+      const response = await axios.post(
         `${this.baseUrl}/transfer`,
         {
           source: 'balance',
@@ -97,7 +97,7 @@ class PaystackService {
   // Finalize transfer
   async finalizeTransfer(transferCode, otp) {
     try {
-      const response = await post(
+      const response = await axios.post(
         `${this.baseUrl}/transfer/finalize_transfer`,
         {
           transfer_code: transferCode,
@@ -115,7 +115,7 @@ class PaystackService {
   // Get transfer status
   async getTransferStatus(reference) {
     try {
-      const response = await get(
+      const response = await axios.get(
         `${this.baseUrl}/transfer/${reference}`,
         { headers: this.headers }
       );
