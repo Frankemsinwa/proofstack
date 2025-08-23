@@ -1,4 +1,4 @@
-import paystackService from '../services/paystack.service';
+import paystackService from '../services/paystack.service.js';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
