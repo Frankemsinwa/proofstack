@@ -1,11 +1,11 @@
 import express from 'express';
 import { fundWallet, getWalletBalance, getTransactionHistory } from '../controllers/wallet.controller.js';
-import { auth } from '../middleware/auth.middleware.js';
+import authMiddleware from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
 // All wallet routes require authentication
-router.use(auth);
+router.use(authMiddleware);
 
 // POST /api/wallet/fund - Fund wallet
 router.post('/fund', fundWallet);
