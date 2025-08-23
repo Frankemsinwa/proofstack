@@ -14,7 +14,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swaggerConfig.js';
 import cleanupUnverifiedAccounts from './jobs/cleanup.js';
-import { paystackWebhookHandler } from './controllers/webhook.controller.js';
+import webhookController from './controllers/webhook.controller.js';
 
 
 const app = express();
@@ -38,7 +38,7 @@ app.use('/api/wallet', walletRoutes);
 app.post(
   '/api/webhooks/paystack',
   express.raw({ type: 'application/json' }),
-  paystackWebhookHandler
+  webhookController.paystackWebhookHandler
 );
 
 // Swagger UI
