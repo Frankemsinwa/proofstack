@@ -21,6 +21,7 @@ enum ReferralType {
 enum JobStatus {
   open
   closed
+  DISPUTED
 }
 
 enum ProposalStatus {
@@ -84,6 +85,8 @@ model User {
   trustEvents        TrustEvent[]
   transactions       Transaction[]
   withdrawalRequests WithdrawalRequest[]
+
+  @@index([createdAt])
 }
 
 model Skill {
@@ -150,6 +153,11 @@ model JobPost {
   proposals      Proposal[]
   proofChallenge ProofChallenge?
   transactions   Transaction[]
+  disputes       Dispute[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Proposal {
@@ -211,6 +219,22 @@ model TrustEvent {
   user User @relation(fields: [userId], references: [id])
 }
 
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+}
+
+model Dispute {
+  id        String        @id @default(uuid())
+  jobId     String
+  reason    String
+  status    DisputeStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  job JobPost @relation(fields: [jobId], references: [id])
+}
+
 model Transaction {
   id        String    @id @default(uuid())
   userId    String
@@ -226,6 +250,11 @@ model Transaction {
 
   user User @relation(fields: [userId], references: [id])
   job  JobPost? @relation(fields: [jobId], references: [id])
+
+  @@index([userId])
+  @@index([jobId])
+  @@index([reference])
+  @@index([createdAt])
 }
 
 model WithdrawalRequest {
@@ -241,4 +270,8 @@ model WithdrawalRequest {
   updatedAt   DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([reference])
+  @@index([createdAt])
 }

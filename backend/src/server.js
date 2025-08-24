@@ -10,6 +10,8 @@ import jobRoutes from './routes/job.routes.js';
 import proposalRoutes from './routes/proposal.routes.js';
 import bfRoutes from './routes/bf.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
+import payoutRoutes from './routes/payout.routes.js';
+import disputeRoutes from './routes/dispute.routes.js';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swaggerConfig.js';
@@ -33,6 +35,8 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/proposals', proposalRoutes);
 app.use('/api/bf', bfRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/payout', payoutRoutes);
+app.use('/api', disputeRoutes);
 
 // Paystack webhook route
 app.post(

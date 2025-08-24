@@ -1,5 +1,5 @@
 import express from 'express';
-import { createJob, getAllJobs, getJobById, updateJobStatus } from '../controllers/job.controller.js';
+import { createJob, getAllJobs, getJobById, updateJobStatus, releaseEscrow } from '../controllers/job.controller.js';
 import protect from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -138,5 +138,48 @@ router.get('/:id', getJobById);
  *         description: Job not found or not authorized.
  */
 router.patch('/:id/status', updateJobStatus);
+
+/**
+ * @swagger
+ * /jobs/{id}/release:
+ *   post:
+ *     summary: Release escrow to a talent
+ *     description: Allows a client or admin to release escrowed funds to a talent for a specific job.
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The job ID.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - talentId
+ *             properties:
+ *               talentId:
+ *                 type: string
+ *                 description: The ID of the talent to receive the funds.
+ *               amountNaira:
+ *                 type: number
+ *                 description: The amount in Naira to release. If not provided, the full escrow balance is released.
+ *     responses:
+ *       200:
+ *         description: Escrow released successfully.
+ *       400:
+ *         description: Insufficient escrow balance.
+ *       403:
+ *         description: Forbidden. Not authorized to release escrow.
+ *       404:
+ *         description: Job or talent not found.
+ */
+router.post('/:id/release', releaseEscrow);
 
 export default router;

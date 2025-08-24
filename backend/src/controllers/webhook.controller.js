@@ -103,40 +103,31 @@ const handleSuccessfulPayment = async (event) => {
 // Handle successful transfer
 const handleSuccessfulTransfer = async (event) => {
   try {
-    const { reference, amount, recipient } = event.data;
+    const { reference } = event.data;
 
-    // Find the withdrawal request associated with this transfer
-    const withdrawalRequest = await prisma.withdrawalRequest.findFirst({
+    const withdrawalRequest = await prisma.withdrawalRequest.findUnique({
       where: { reference },
     });
 
     if (!withdrawalRequest) {
-      console.error('No withdrawal request found for transfer reference:', reference);
+      console.error(`No withdrawal request found for reference: ${reference}`);
       return;
     }
 
-    // Update withdrawal request status
+    if (withdrawalRequest.status === 'SUCCESS') {
+      console.log(`Withdrawal ${reference} already processed, skipping.`);
+      return;
+    }
+
     await prisma.withdrawalRequest.update({
       where: { id: withdrawalRequest.id },
       data: {
         status: 'SUCCESS',
+        meta: event.data,
       },
     });
 
-    // Create transaction record for the withdrawal
-    await prisma.transaction.create({
-      data: {
-        userId: withdrawalRequest.userId,
-        type: 'PAYOUT',
-        status: 'SUCCESS',
-        amount: withdrawalRequest.amount,
-        currency: withdrawalRequest.currency,
-        reference: `withdrawal_${reference}`,
-        meta: { transferReference: reference, recipient },
-      },
-    });
-
-    console.log(`Successfully processed transfer ${reference} for user ${withdrawalRequest.userId}`);
+    console.log(`Successfully processed transfer ${reference}`);
   } catch (error) {
     console.error('Error handling successful transfer:', error);
   }
@@ -145,40 +136,42 @@ const handleSuccessfulTransfer = async (event) => {
 // Handle failed transfer
 const handleFailedTransfer = async (event) => {
   try {
-    const { reference, amount, recipient } = event.data;
+    const { reference } = event.data;
 
-    // Find the withdrawal request associated with this transfer
-    const withdrawalRequest = await prisma.withdrawalRequest.findFirst({
+    const withdrawalRequest = await prisma.withdrawalRequest.findUnique({
       where: { reference },
     });
 
     if (!withdrawalRequest) {
-      console.error('No withdrawal request found for failed transfer reference:', reference);
+      console.error(`No withdrawal request found for reference: ${reference}`);
       return;
     }
 
-    // Update withdrawal request status
-    await prisma.withdrawalRequest.update({
-      where: { id: withdrawalRequest.id },
-      data: {
-        status: 'FAILED',
-      },
+    if (withdrawalRequest.status === 'FAILED') {
+      console.log(`Withdrawal ${reference} already marked as failed, skipping.`);
+      return;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.withdrawalRequest.update({
+        where: { id: withdrawalRequest.id },
+        data: {
+          status: 'FAILED',
+          meta: event.data,
+        },
+      });
+
+      await tx.user.update({
+        where: { id: withdrawalRequest.userId },
+        data: {
+          walletBalance: {
+            increment: withdrawalRequest.amount,
+          },
+        },
+      });
     });
 
-    // Create transaction record for the failed withdrawal
-    await prisma.transaction.create({
-      data: {
-        userId: withdrawalRequest.userId,
-        type: 'PAYOUT',
-        status: 'FAILED',
-        amount: withdrawalRequest.amount,
-        currency: withdrawalRequest.currency,
-        reference: `withdrawal_${reference}`,
-        meta: { transferReference: reference, recipient, error: event.data.message },
-      },
-    });
-
-    console.log(`Failed transfer ${reference} for user ${withdrawalRequest.userId}`);
+    console.log(`Processed failed transfer ${reference} and refunded user.`);
   } catch (error) {
     console.error('Error handling failed transfer:', error);
   }
