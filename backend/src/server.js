@@ -12,6 +12,7 @@ import bfRoutes from './routes/bf.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import payoutRoutes from './routes/payout.routes.js';
 import disputeRoutes from './routes/dispute.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swaggerConfig.js';
@@ -37,6 +38,7 @@ app.use('/api/bf', bfRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/payout', payoutRoutes);
 app.use('/api', disputeRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Paystack webhook route
 app.post(
