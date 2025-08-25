@@ -50,6 +50,11 @@ enum TxnStatus {
   FAILED
 }
 
+enum AdminRole {
+  ADMIN
+  SUPERADMIN
+}
+
 model User {
   id              String    @id @default(uuid())
   email           String    @unique
@@ -87,6 +92,22 @@ model User {
   withdrawalRequests WithdrawalRequest[]
 
   @@index([createdAt])
+}
+
+model Admin {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  passwordHash         String
+  role                 AdminRole @default(ADMIN)
+  is2FAEnabled         Boolean   @default(false)
+  totpSecret           String?   @map("totp_secret") // store encrypted base32 or null
+  failedLoginAttempts  Int       @default(0)
+  lockedUntil          DateTime?
+  lastLoginAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([email])
 }
 
 model Skill {
